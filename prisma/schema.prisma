@@ -1,0 +1,30 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model ClockifyHours {
+  project   String
+  client    String?
+  weekStart DateTime
+  weekEnd   DateTime
+  user      String
+  time      String
+  timeDec   String
+
+  @@id([user, project, weekStart])
+}
+
+model CohortStudents {
+  name    String
+  project String
+
+  @@id([name, project])
+}
