@@ -1,13 +1,20 @@
 import express, { Request, Response } from "express";
+import {
+  updateCohortMembers,
+  updateClockifyHours,
+  generateCSVcontents,
+} from "./utils";
 
 const fs = require("fs");
-const { parse } = require("csv-parse");
-const { stringify } = require("csv-stringify");
-const { promisify } = require("util");
-const { PrismaClient } = require("@prisma/client");
 const cors = require("cors");
 const fileUpload = require("express-fileupload");
 const path = require("path");
+const { stringify } = require("csv-stringify");
+const { PrismaClient } = require("@prisma/client");
+
+const port = 3000;
+
+const prisma = new PrismaClient();
 
 const app = express();
 
@@ -16,162 +23,132 @@ app.use(express.urlencoded({ extended: false }));
 app.use(cors());
 app.use(fileUpload());
 
-const port = 3000;
-
-const prisma = new PrismaClient();
-
-type User = {
-  project: string;
-  client: string;
-  weekStart: Date;
-  weekEnd: Date;
-  user: string;
-  time: string;
-  timeDec: string;
-};
-
-const readFile = promisify(fs.readFile);
-const parseCSV = promisify(parse);
-
-const processClockifyCSV = async (file: any) => {
-  try {
-    const users: User[] = [];
-    const path = `./public/${file.name}`;
-    const data = await readFile(path, "utf-8");
-    const rows = await parseCSV(data, { delimiter: "," });
-
-    rows.forEach((row: Array<string>) => {
-      const weekStart = new Date(row[2].split("-")[0].trim());
-      const weekEnd = new Date(row[2].split("-")[1].trim());
-
-      const user: User = {
-        project: row[0],
-        client: row[1],
-        weekStart,
-        weekEnd,
-        user: row[3],
-        time: row[4],
-        timeDec: row[5],
-      };
-
-      users.push(user);
-    });
-
-    return users;
-  } catch (err) {
-    throw err;
-  }
-};
-
-const findUsers = async (csvoption: any) => {
-  const cohortMembers: any = [];
-
-  const weeks = await prisma.ClockifyHours.groupBy({
-    by: ["weekStart"],
-    where: {
-      project: `${csvoption}`,
-    },
-    orderBy: {
-      weekStart: "asc",
-    },
-  });
-
-  const users = await prisma.ClockifyHours.groupBy({
-    by: ["user"],
-    where: {
-      project: `${csvoption}`,
-    },
-  });
-
-  for (let i = 0; i < users.length; i++) {
-    const cohortMember: Record<string, any> = { name: users[i].user };
-    const userInfo = await prisma.ClockifyHours.findMany({
-      where: {
-        user: users[i].user,
-      },
-    });
-
-    for (let j = 0; j < weeks.length; j++) {
-      const found = userInfo.find(
-        (item: any) =>
-          weeks[j].weekStart.toISOString().split("T")[0] ===
-          item.weekStart.toISOString().split("T")[0]
-      );
-      if (found) {
-        cohortMember[
-          weeks[j].weekStart.toISOString().split("T")[0] as keyof Object
-        ] = found.time;
-      } else {
-        cohortMember[
-          weeks[j].weekStart.toISOString().split("T")[0] as keyof Object
-        ] = "00:00:00";
-      }
-    }
-
-    cohortMembers.push(cohortMember);
-  }
-
-  return cohortMembers;
-};
-
 app.get("/", (req: Request, res: Response) => {
   res.send(`server running on port ${port || 3000}`);
 });
 
-app.post("/updateDatabase", (req: any, res: Response) => {
-  const file = req.files.file;
-  //console.log(file);
+app.get("/getProjects", async (req: Request, res: Response) => {
   try {
-    file.mv(path.join(__dirname, "public", file.name), async (err: any) => {
-      if (err) {
-        res.sendStatus(500);
-      }
-      await processClockifyCSV(file).then(async (result) => {
-        await prisma.ClockifyHours.createMany({
-          data: result,
-          skipDuplicates: true,
-        });
-        res.sendStatus(200);
-      });
+    const projects = await prisma.ClockifyHours.groupBy({
+      by: ["project"],
+      select: {
+        project: true,
+      },
     });
+
+    res.status(200).json(projects);
   } catch (error) {
-    console.log(error);
+    console.error(error);
   }
 });
 
-app.get("/getProjects", async (req, res) => {
-  const projects = await prisma.ClockifyHours.groupBy({
-    by: ["project"],
-    select: {
-      project: true,
-    },
-  });
+app.post("/updateCohortMembers", (req: Request, res: Response) => {
+  const files = req.files;
 
-  res.json(projects);
+  if (!files || !files.file) {
+    return res.status(400).json({ error: "No file uploaded." });
+  }
+
+  const file = Array.isArray(files.file) ? files.file[0] : files.file;
+
+  file.mv(
+    path.join(__dirname, "public", "cohortmembers.csv"),
+    (err: NodeJS.ErrnoException) => {
+      if (err) {
+        console.error;
+      }
+    }
+  );
+
+  try {
+    updateCohortMembers();
+    res.status(200).json({ Message: "Cohort members updated" });
+  } catch (error) {
+    console.error(error);
+    res
+      .status(500)
+      .json({ error: "An error occurred during the update process." });
+  }
 });
 
-app.post("/downloadCSV", async (req, res) => {
-  const { csvoption } = req.body;
-  const result = await findUsers(csvoption);
-  const resObj = { rows: result };
-  let message = "";
+app.post("/updateClockifyHours", async (req: Request, res: Response) => {
+  const files = req.files;
 
-  stringify(resObj.rows, function (err: any, output: any) {
-    fs.writeFile("./public/cohort.csv", output, "utf8", function (err: any) {
+  if (!files || !files.file) {
+    return res.status(400).json({ error: "No file uploaded." });
+  }
+
+  const file = Array.isArray(files.file) ? files.file[0] : files.file;
+
+  file.mv(
+    path.join(__dirname, "public", "database.csv"),
+    (err: NodeJS.ErrnoException) => {
       if (err) {
-        console.log(err);
-      } else {
-        console.log("File created");
-        message = "File created";
+        console.error(err);
+        return res
+          .status(500)
+          .json({ error: "An error occurred during file upload." });
       }
-    });
-  });
-
-  res.download("./public/cohort.csv", "cohort.csv", (err: any) => {
-    if (err) {
-      res.send("Server error");
     }
-  });
+  );
+
+  try {
+    const wrongCohort = await updateClockifyHours();
+    res.status(200).json({ Message: "Database updated", wrongCohort });
+  } catch (error) {
+    console.error(error);
+    res
+      .status(500)
+      .json({ error: "An error occurred during the update process." });
+  }
+});
+
+app.post("/downloadCSV", async (req: Request, res: Response) => {
+  const { csvOption } = req.body;
+
+  try {
+    const result = await generateCSVcontents(csvOption);
+    const resObj = { rows: result };
+
+    stringify(
+      resObj.rows,
+      function (error: NodeJS.ErrnoException, output: string) {
+        fs.writeFile(
+          "./public/cohort.csv",
+          output,
+          "utf8",
+          function (error: NodeJS.ErrnoException) {
+            if (error) {
+              console.error(error);
+              res.status(500).json({
+                error: "An error occurred during the csv creation process.",
+              });
+            } else {
+              console.log("File created");
+            }
+          }
+        );
+      }
+    );
+
+    res.download(
+      "./public/cohort.csv",
+      "cohort.csv",
+      (error: NodeJS.ErrnoException) => {
+        if (error) {
+          console.error(error);
+          res
+            .status(500)
+            .json({ error: "An error occurred during the download process." });
+        }
+      }
+    );
+  } catch (error) {
+    console.error(error);
+    res
+      .status(500)
+      .json({ error: "An error occurred during the csv creation process." });
+  }
 });
 
 app.listen(3000, () => {
