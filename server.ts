@@ -29,6 +29,7 @@ app.get("/", (req: Request, res: Response) => {
   res.send(`server running on port ${port || 3000}`);
 });
 
+// Gets a list of all available project options in the database
 app.get("/getProjects", async (req: Request, res: Response) => {
   try {
     const projects = await prisma.ClockifyHours.groupBy({
@@ -44,6 +45,7 @@ app.get("/getProjects", async (req: Request, res: Response) => {
   }
 });
 
+// Gets the file size of the completed csv to match it to the file that is downloaded on the frontend
 app.get("/getFileSize", async (req: Request, res: Response) => {
   try {
     const stats = await Fs.stat("./public/cohort.csv");
@@ -54,6 +56,7 @@ app.get("/getFileSize", async (req: Request, res: Response) => {
   }
 });
 
+// Updates all the list of cohort members based on an uploaded csv
 app.post("/updateCohortMembers", (req: Request, res: Response) => {
   const files = req.files;
 
@@ -83,6 +86,7 @@ app.post("/updateCohortMembers", (req: Request, res: Response) => {
   }
 });
 
+// Updates all clockify entries in the database
 app.post("/updateClockifyHours", async (req: Request, res: Response) => {
   const files = req.files;
 
@@ -115,6 +119,7 @@ app.post("/updateClockifyHours", async (req: Request, res: Response) => {
   }
 });
 
+// Generates a CSV based on the selected project options and sends it to be downloaded to the client
 app.post("/downloadCSV", async (req: Request, res: Response) => {
   const { csvOptions } = req.body;
   try {

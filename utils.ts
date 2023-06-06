@@ -24,6 +24,7 @@ type CohortMemberObject = {
   [key: string]: string | undefined;
 };
 
+// Reads the uploaded CSV file and enters all members into the database. Skips duplicate entries
 export const updateCohortMembers = async () => {
   const cohortMembers: CohortMember[] = [];
   const readFile = promisify(fs.readFile);
@@ -51,6 +52,9 @@ export const updateCohortMembers = async () => {
   }
 };
 
+/* Reads the uploaded CSV and enters all clockify hours into the database. 
+Skips duplicates and will send a message if a member has hours that are 
+entered under a different project than what is listed on the member table */
 export const updateClockifyHours = async () => {
   const users: User[] = [];
   const wrongCohort: CohortMember[] = [];
@@ -110,6 +114,7 @@ export const updateClockifyHours = async () => {
   return wrongCohort;
 };
 
+// Generates a CSV based on the options arguments
 export const generateCSVcontents = async (csvoptions: string[]) => {
   const cohortMembers: CohortMemberObject[] = [];
 
