@@ -165,6 +165,8 @@ app.post("/downloadCSV", async (req: Request, res: Response) => {
       .status(500)
       .json({ error: "An error occurred during the csv creation process." });
   }
+
+  console.log("file sent");
 });
 
 app.listen(3000, () => {
