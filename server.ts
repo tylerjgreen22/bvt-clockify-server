@@ -168,6 +168,10 @@ app.post("/downloadCSV", async (req: Request, res: Response) => {
           res.status(500).json({
             error: "An error occurred during the download process.",
           });
+        } else if (!res.headersSent) {
+          // Handle the case where the download response was not sent
+          console.error("File download response not sent.");
+          res.status(500).send("File download response not sent.");
         }
       }
     );
