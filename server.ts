@@ -149,6 +149,18 @@ app.post("/downloadCSV", async (req: Request, res: Response) => {
       }
     );
 
+    const filePath = "./public/cohort.csv";
+
+    fs.access(filePath, fs.constants.F_OK, (err: NodeJS.ErrnoException) => {
+      if (err) {
+        console.error(`File does not exist at ${filePath}`);
+      } else {
+        console.log(`File exists at ${filePath}`);
+      }
+
+      res.send("File check completed.");
+    });
+
     res.download(
       "./public/cohort.csv",
       "cohort.csv",
