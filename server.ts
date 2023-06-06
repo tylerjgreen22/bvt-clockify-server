@@ -128,7 +128,7 @@ app.post("/downloadCSV", async (req: Request, res: Response) => {
     const result = await generateCSVcontents(csvOptions);
     const resObj = { rows: result };
 
-    stringify(
+    await stringify(
       resObj.rows,
       function (error: NodeJS.ErrnoException, output: string) {
         fs.writeFile(
