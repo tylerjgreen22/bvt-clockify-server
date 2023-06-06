@@ -132,7 +132,7 @@ app.post("/downloadCSV", async (req: Request, res: Response) => {
       resObj.rows,
       function (error: NodeJS.ErrnoException, output: string) {
         fs.writeFile(
-          "./public/cohort.csv",
+          "./cohort.csv",
           output,
           "utf8",
           function (error: NodeJS.ErrnoException) {
@@ -149,7 +149,7 @@ app.post("/downloadCSV", async (req: Request, res: Response) => {
       }
     );
 
-    const filePath = "./public/cohort.csv";
+    const filePath = "./cohort.csv";
 
     fs.access(filePath, fs.constants.F_OK, (err: NodeJS.ErrnoException) => {
       if (err) {
@@ -160,7 +160,7 @@ app.post("/downloadCSV", async (req: Request, res: Response) => {
     });
 
     res.download(
-      "./public/cohort.csv",
+      "./cohort.csv",
       "cohort.csv",
       (error: NodeJS.ErrnoException) => {
         if (error) {
