@@ -157,8 +157,6 @@ app.post("/downloadCSV", async (req: Request, res: Response) => {
       } else {
         console.log(`File exists at ${filePath}`);
       }
-
-      res.send("File check completed.");
     });
 
     res.download(
