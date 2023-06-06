@@ -128,26 +128,26 @@ app.post("/downloadCSV", async (req: Request, res: Response) => {
     const result = await generateCSVcontents(csvOptions);
     const resObj = { rows: result };
 
-    // await stringify(
-    //   resObj.rows,
-    //   function (error: NodeJS.ErrnoException, output: string) {
-    //     fs.writeFile(
-    //       "./cohort.csv",
-    //       output,
-    //       "utf8",
-    //       function (error: NodeJS.ErrnoException) {
-    //         if (error) {
-    //           console.error(error);
-    //           res.status(500).json({
-    //             error: "An error occurred during the csv creation process.",
-    //           });
-    //         } else {
-    //           console.log("File created");
-    //         }
-    //       }
-    //     );
-    //   }
-    // );
+    await stringify(
+      resObj.rows,
+      async function (error: NodeJS.ErrnoException, output: string) {
+        await fs.writeFile(
+          "./cohort.csv",
+          output,
+          "utf8",
+          function (error: NodeJS.ErrnoException) {
+            if (error) {
+              console.error(error);
+              res.status(500).json({
+                error: "An error occurred during the csv creation process.",
+              });
+            } else {
+              console.log("File created");
+            }
+          }
+        );
+      }
+    );
 
     const filePath = "./cohort.csv";
 
