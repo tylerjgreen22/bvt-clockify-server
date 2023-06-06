@@ -13,6 +13,7 @@ const fileUpload = require("express-fileupload");
 const path = require("path");
 const { stringify } = require("csv-stringify");
 const { PrismaClient } = require("@prisma/client");
+const morgan = require("morgan");
 
 const port = 3000;
 
@@ -20,6 +21,7 @@ const prisma = new PrismaClient();
 
 const app = express();
 
+app.use(morgan("dev"));
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(cors());
