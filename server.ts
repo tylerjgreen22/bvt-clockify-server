@@ -5,6 +5,8 @@ import {
   generateCSVcontents,
 } from "./utils";
 
+import Fs from "fs/promises";
+
 const fs = require("fs");
 const cors = require("cors");
 const fileUpload = require("express-fileupload");
@@ -37,6 +39,16 @@ app.get("/getProjects", async (req: Request, res: Response) => {
     });
 
     res.status(200).json(projects);
+  } catch (error) {
+    console.error(error);
+  }
+});
+
+app.get("/getFileSize", async (req: Request, res: Response) => {
+  try {
+    const stats = await Fs.stat("./public/cohort.csv");
+
+    res.json({ size: stats.size });
   } catch (error) {
     console.error(error);
   }
@@ -104,10 +116,9 @@ app.post("/updateClockifyHours", async (req: Request, res: Response) => {
 });
 
 app.post("/downloadCSV", async (req: Request, res: Response) => {
-  const { csvOption } = req.body;
-
+  const { csvOptions } = req.body;
   try {
-    const result = await generateCSVcontents(csvOption);
+    const result = await generateCSVcontents(csvOptions);
     const resObj = { rows: result };
 
     stringify(
@@ -137,9 +148,9 @@ app.post("/downloadCSV", async (req: Request, res: Response) => {
       (error: NodeJS.ErrnoException) => {
         if (error) {
           console.error(error);
-          res
-            .status(500)
-            .json({ error: "An error occurred during the download process." });
+          res.status(500).json({
+            error: "An error occurred during the download process.",
+          });
         }
       }
     );
