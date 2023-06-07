@@ -45,7 +45,7 @@ app.get("/getProjects", async (req: Request, res: Response) => {
   }
 });
 
-// This route downloads the last generated CSV
+// Downloads the last generated CSV
 app.get("/downloadCSV", (req: Request, res: Response) => {
   res.download("./cohort.csv", "cohort.csv", (error: NodeJS.ErrnoException) => {
     if (error) {
@@ -58,6 +58,20 @@ app.get("/downloadCSV", (req: Request, res: Response) => {
       res.status(500).send("File download response not sent.");
     }
   });
+});
+
+// Updates the database with the uploaded CSVs
+app.get("/updateDatabase", async (req: Request, res: Response) => {
+  try {
+    await updateCohortMembers();
+    const wrongCohort = await updateClockifyHours();
+    res.status(200).json({ Message: "Database updated", wrongCohort });
+  } catch (error) {
+    console.error(error);
+    res
+      .status(500)
+      .json({ error: "An error occurred during the update process." });
+  }
 });
 
 // Updates all the list of cohort members based on an uploaded csv
@@ -78,16 +92,6 @@ app.post("/updateCohortMembers", (req: Request, res: Response) => {
       }
     }
   );
-
-  // try {
-  //   updateCohortMembers();
-  //   res.status(200).json({ Message: "Cohort members updated" });
-  // } catch (error) {
-  //   console.error(error);
-  //   res
-  //     .status(500)
-  //     .json({ error: "An error occurred during the update process." });
-  // }
 
   res.status(201).json({ message: "member csv updated" });
 });
@@ -117,24 +121,23 @@ app.post("/updateClockifyHours", async (req: Request, res: Response) => {
   res.status(201).json({ message: "Clockify csv updated" });
 });
 
-app.get("/updateDatabase", async (req: Request, res: Response) => {
-  try {
-    await updateCohortMembers();
-    const wrongCohort = await updateClockifyHours();
-    res.status(200).json({ Message: "Database updated", wrongCohort });
-  } catch (error) {
-    console.error(error);
-    res
-      .status(500)
-      .json({ error: "An error occurred during the update process." });
-  }
-});
-
 // Generates a CSV based on the selected project options
 app.post("/generateCSV", async (req: Request, res: Response) => {
   const { csvOptions } = req.body;
   try {
     const result = await generateCSVcontents(csvOptions);
+    result.sort((a, b) => {
+      const numPropertiesA = Object.keys(a).length;
+      const numPropertiesB = Object.keys(b).length;
+
+      if (numPropertiesA > numPropertiesB) {
+        return -1;
+      } else if (numPropertiesA < numPropertiesB) {
+        return 1;
+      }
+
+      return 0;
+    });
     const resObj = { rows: result };
 
     await stringify(
