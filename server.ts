@@ -92,25 +92,25 @@ app.post("/updateCohortMembers", (req: Request, res: Response) => {
 
 // Updates all clockify entries in the database
 app.post("/updateClockifyHours", async (req: Request, res: Response) => {
-  const files = req.files;
+  // const files = req.files;
 
-  if (!files || !files.file) {
-    return res.status(400).json({ error: "No file uploaded." });
-  }
+  // if (!files || !files.file) {
+  //   return res.status(400).json({ error: "No file uploaded." });
+  // }
 
-  const file = Array.isArray(files.file) ? files.file[0] : files.file;
+  // const file = Array.isArray(files.file) ? files.file[0] : files.file;
 
-  file.mv(
-    path.join(__dirname, "public", "database.csv"),
-    (err: NodeJS.ErrnoException) => {
-      if (err) {
-        console.error(err);
-        return res
-          .status(500)
-          .json({ error: "An error occurred during file upload." });
-      }
-    }
-  );
+  // file.mv(
+  //   path.join(__dirname, "public", "database.csv"),
+  //   (err: NodeJS.ErrnoException) => {
+  //     if (err) {
+  //       console.error(err);
+  //       return res
+  //         .status(500)
+  //         .json({ error: "An error occurred during file upload." });
+  //     }
+  //   }
+  // );
 
   try {
     const wrongCohort = await updateClockifyHours();
