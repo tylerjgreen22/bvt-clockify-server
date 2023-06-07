@@ -5,8 +5,6 @@ import {
   generateCSVcontents,
 } from "./utils";
 
-import Fs from "fs/promises";
-
 const fs = require("fs");
 const cors = require("cors");
 const fileUpload = require("express-fileupload");
@@ -47,15 +45,19 @@ app.get("/getProjects", async (req: Request, res: Response) => {
   }
 });
 
-// Gets the file size of the completed csv to match it to the file that is downloaded on the frontend
-app.get("/getFileSize", async (req: Request, res: Response) => {
-  try {
-    const stats = await Fs.stat("./cohort.csv");
-
-    res.json({ size: stats.size });
-  } catch (error) {
-    console.error(error);
-  }
+// This route downloads the last generated CSV
+app.get("/downloadCSV", (req: Request, res: Response) => {
+  res.download("./cohort.csv", "cohort.csv", (error: NodeJS.ErrnoException) => {
+    if (error) {
+      console.error(error);
+      res.status(500).json({
+        error: "An error occurred during the download process.",
+      });
+    } else if (!res.headersSent) {
+      console.error("File download response not sent.");
+      res.status(500).send("File download response not sent.");
+    }
+  });
 });
 
 // Updates all the list of cohort members based on an uploaded csv
@@ -121,7 +123,7 @@ app.post("/updateClockifyHours", async (req: Request, res: Response) => {
   }
 });
 
-// Generates a CSV based on the selected project options and sends it to be downloaded to the client
+// Generates a CSV based on the selected project options
 app.post("/generateCSV", async (req: Request, res: Response) => {
   const { csvOptions } = req.body;
   try {
@@ -148,38 +150,13 @@ app.post("/generateCSV", async (req: Request, res: Response) => {
         );
       }
     );
-
-    res.json({ message: "Your file is ready" });
-    // const filePath = "./cohort.csv";
-
-    // fs.access(filePath, fs.constants.F_OK, (err: NodeJS.ErrnoException) => {
-    //   if (err) {
-    //     console.error(`File does not exist at ${filePath}`);
-    //   } else {
-    //     console.log(`File exists at ${filePath}`);
-    //   }
-    // });
+    res.status(201).json({ message: "Your file is ready" });
   } catch (error) {
     console.error(error);
     res
       .status(500)
       .json({ error: "An error occurred during the csv creation process." });
   }
-});
-
-app.get("/downloadCSV", (req: Request, res: Response) => {
-  res.download("./cohort.csv", "cohort.csv", (error: NodeJS.ErrnoException) => {
-    if (error) {
-      console.error(error);
-      res.status(500).json({
-        error: "An error occurred during the download process.",
-      });
-    } else if (!res.headersSent) {
-      // Handle the case where the download response was not sent
-      console.error("File download response not sent.");
-      res.status(500).send("File download response not sent.");
-    }
-  });
 });
 
 app.listen(3000, () => {

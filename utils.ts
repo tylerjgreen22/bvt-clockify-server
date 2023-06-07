@@ -114,7 +114,7 @@ export const updateClockifyHours = async () => {
   return wrongCohort;
 };
 
-// Generates a CSV based on the options arguments
+// Generates the CSV contents based on the options arguments
 export const generateCSVcontents = async (csvoptions: string[]) => {
   const cohortMembers: CohortMemberObject[] = [];
 
