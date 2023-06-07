@@ -122,7 +122,7 @@ app.post("/updateClockifyHours", async (req: Request, res: Response) => {
 });
 
 // Generates a CSV based on the selected project options and sends it to be downloaded to the client
-app.post("/downloadCSV", async (req: Request, res: Response) => {
+app.post("/generateCSV", async (req: Request, res: Response) => {
   const { csvOptions } = req.body;
   try {
     const result = await generateCSVcontents(csvOptions);
@@ -149,38 +149,37 @@ app.post("/downloadCSV", async (req: Request, res: Response) => {
       }
     );
 
-    const filePath = "./cohort.csv";
+    res.json({ message: "Your file is ready" });
+    // const filePath = "./cohort.csv";
 
-    fs.access(filePath, fs.constants.F_OK, (err: NodeJS.ErrnoException) => {
-      if (err) {
-        console.error(`File does not exist at ${filePath}`);
-      } else {
-        console.log(`File exists at ${filePath}`);
-      }
-    });
-
-    res.download(
-      "./cohort.csv",
-      "cohort.csv",
-      (error: NodeJS.ErrnoException) => {
-        if (error) {
-          console.error(error);
-          res.status(500).json({
-            error: "An error occurred during the download process.",
-          });
-        } else if (!res.headersSent) {
-          // Handle the case where the download response was not sent
-          console.error("File download response not sent.");
-          res.status(500).send("File download response not sent.");
-        }
-      }
-    );
+    // fs.access(filePath, fs.constants.F_OK, (err: NodeJS.ErrnoException) => {
+    //   if (err) {
+    //     console.error(`File does not exist at ${filePath}`);
+    //   } else {
+    //     console.log(`File exists at ${filePath}`);
+    //   }
+    // });
   } catch (error) {
     console.error(error);
     res
       .status(500)
       .json({ error: "An error occurred during the csv creation process." });
   }
+});
+
+app.get("/downloadCSV", (req: Request, res: Response) => {
+  res.download("./cohort.csv", "cohort.csv", (error: NodeJS.ErrnoException) => {
+    if (error) {
+      console.error(error);
+      res.status(500).json({
+        error: "An error occurred during the download process.",
+      });
+    } else if (!res.headersSent) {
+      // Handle the case where the download response was not sent
+      console.error("File download response not sent.");
+      res.status(500).send("File download response not sent.");
+    }
+  });
 });
 
 app.listen(3000, () => {
