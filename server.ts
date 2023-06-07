@@ -50,7 +50,7 @@ app.get("/getProjects", async (req: Request, res: Response) => {
 // Gets the file size of the completed csv to match it to the file that is downloaded on the frontend
 app.get("/getFileSize", async (req: Request, res: Response) => {
   try {
-    const stats = await Fs.stat("./public/cohort.csv");
+    const stats = await Fs.stat("./cohort.csv");
 
     res.json({ size: stats.size });
   } catch (error) {
