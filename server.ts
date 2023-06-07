@@ -79,40 +79,47 @@ app.post("/updateCohortMembers", (req: Request, res: Response) => {
     }
   );
 
-  try {
-    updateCohortMembers();
-    res.status(200).json({ Message: "Cohort members updated" });
-  } catch (error) {
-    console.error(error);
-    res
-      .status(500)
-      .json({ error: "An error occurred during the update process." });
-  }
+  // try {
+  //   updateCohortMembers();
+  //   res.status(200).json({ Message: "Cohort members updated" });
+  // } catch (error) {
+  //   console.error(error);
+  //   res
+  //     .status(500)
+  //     .json({ error: "An error occurred during the update process." });
+  // }
+
+  res.status(201).json({ message: "member csv updated" });
 });
 
 // Updates all clockify entries in the database
 app.post("/updateClockifyHours", async (req: Request, res: Response) => {
-  // const files = req.files;
+  const files = req.files;
 
-  // if (!files || !files.file) {
-  //   return res.status(400).json({ error: "No file uploaded." });
-  // }
+  if (!files || !files.file) {
+    return res.status(400).json({ error: "No file uploaded." });
+  }
 
-  // const file = Array.isArray(files.file) ? files.file[0] : files.file;
+  const file = Array.isArray(files.file) ? files.file[0] : files.file;
 
-  // file.mv(
-  //   path.join(__dirname, "public", "database.csv"),
-  //   (err: NodeJS.ErrnoException) => {
-  //     if (err) {
-  //       console.error(err);
-  //       return res
-  //         .status(500)
-  //         .json({ error: "An error occurred during file upload." });
-  //     }
-  //   }
-  // );
+  file.mv(
+    path.join(__dirname, "public", "database.csv"),
+    (err: NodeJS.ErrnoException) => {
+      if (err) {
+        console.error(err);
+        return res
+          .status(500)
+          .json({ error: "An error occurred during file upload." });
+      }
+    }
+  );
 
+  res.status(201).json({ message: "Clockify csv updated" });
+});
+
+app.get("/updateDatabase", async (req: Request, res: Response) => {
   try {
+    await updateCohortMembers();
     const wrongCohort = await updateClockifyHours();
     res.status(200).json({ Message: "Database updated", wrongCohort });
   } catch (error) {
