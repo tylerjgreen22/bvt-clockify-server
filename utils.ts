@@ -39,7 +39,6 @@ export const updateCohortMembers = async () => {
         name: row[0],
         project: row[1],
       };
-
       cohortMembers.push(cohortMember);
     });
 
@@ -130,24 +129,6 @@ export const generateCSVcontents = async (csvoptions: string[]) => {
         },
       });
 
-      const weekDates: CohortMemberObject = { name: csvoptions[i] };
-      weeks.forEach((week: any) => {
-        weekDates[week.weekStart.toISOString()] = week.weekStart
-          .toISOString()
-          .split("T")[0];
-      });
-      cohortMembers.push(weekDates);
-
-      const users = await prisma.CohortStudents.groupBy({
-        by: ["name"],
-        where: {
-          project: csvoptions[i],
-        },
-        orderBy: {
-          name: "asc",
-        },
-      });
-
       const userInfo = await prisma.ClockifyHours.findMany({
         select: {
           project: true,
@@ -160,14 +141,35 @@ export const generateCSVcontents = async (csvoptions: string[]) => {
         },
       });
 
-      users.forEach((user: CohortMember) => {
+      // Two versions, one generates CSV based on master list, one based on clockify entries
+
+      // Clockify entries version
+      const weekDates: CohortMemberObject = { user: csvoptions[i] };
+      weeks.forEach((week: any) => {
+        weekDates[week.weekStart.toISOString()] = week.weekStart
+          .toISOString()
+          .split("T")[0];
+      });
+      cohortMembers.push(weekDates);
+
+      const users = await prisma.ClockifyHours.groupBy({
+        by: ["user"],
+        where: {
+          project: csvoptions[i],
+        },
+        orderBy: {
+          user: "asc",
+        },
+      });
+
+      users.forEach((user: User) => {
         const currUserInfo: User[] = [];
         userInfo.forEach((usersInfo: User) => {
-          if (usersInfo.user === user.name) {
+          if (usersInfo.user === user.user) {
             currUserInfo.push(usersInfo);
           }
         });
-        const cohortMember: CohortMemberObject = { name: user.name };
+        const cohortMember: CohortMemberObject = { user: user.user };
 
         weeks.forEach((week: User) => {
           const foundUser = currUserInfo.find(
@@ -184,6 +186,53 @@ export const generateCSVcontents = async (csvoptions: string[]) => {
 
         cohortMembers.push(cohortMember);
       });
+
+      // Master list version
+
+      // const weekDates: CohortMemberObject = { name: csvoptions[i] };
+      // weeks.forEach((week: any) => {
+      //   weekDates[week.weekStart.toISOString()] = week.weekStart
+      //     .toISOString()
+      //     .split("T")[0];
+      // });
+      // cohortMembers.push(weekDates);
+
+      // const users = await prisma.CohortStudents.groupBy({
+      //   by: ["name"],
+      //   where: {
+      //     project: csvoptions[i],
+      //   },
+      //   orderBy: {
+      //     name: "asc",
+      //   },
+      // });
+
+      // console.log(users);
+
+      // users.forEach((user: CohortMember) => {
+      //   const currUserInfo: User[] = [];
+      //   userInfo.forEach((usersInfo: User) => {
+      //     if (usersInfo.user === user.name) {
+      //       currUserInfo.push(usersInfo);
+      //     }
+      //   });
+      //   const cohortMember: CohortMemberObject = { name: user.name };
+
+      //   weeks.forEach((week: User) => {
+      //     const foundUser = currUserInfo.find(
+      //       (usersInfo: User) =>
+      //         week.weekStart.toISOString() === usersInfo.weekStart.toISOString()
+      //     );
+
+      //     if (foundUser) {
+      //       cohortMember[week.weekStart.toISOString()] = foundUser.time;
+      //     } else {
+      //       cohortMember[week.weekStart.toISOString()] = "00:00:00";
+      //     }
+      //   });
+
+      //   cohortMembers.push(cohortMember);
+      // });
     } catch (error) {
       console.error(error);
     }
