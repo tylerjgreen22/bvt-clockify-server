@@ -106,6 +106,8 @@ export const updateClockifyHours = async (fileDate: string) => {
       data: users,
       skipDuplicates: true,
     }).count;
+
+    console.log(updateCount);
   } catch (error) {
     console.error;
   }
