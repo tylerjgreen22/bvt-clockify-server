@@ -54,7 +54,7 @@ export const updateCohortMembers = async () => {
 /* Reads the uploaded CSV and enters all clockify hours into the database. 
 Skips duplicates and will send a message if a member has hours that are 
 entered under a different project than what is listed on the member table */
-export const updateClockifyHours = async () => {
+export const updateClockifyHours = async (fileDate: string) => {
   const users: User[] = [];
   const wrongCohort: CohortMember[] = [];
   const readFile = promisify(fs.readFile);
@@ -66,11 +66,10 @@ export const updateClockifyHours = async () => {
     const cohortMembers = await prisma.CohortStudents.findMany();
 
     rows.forEach((row: Array<string>) => {
-      const weekStart = new Date(row[2].split("-")[0].trim());
-      const weekEnd = new Date(row[2].split("-")[1].trim());
+      const weekStart = new Date(fileDate.split("-")[0].trim());
+      //const weekEnd = new Date(row[2].split("-")[1].trim());
 
-      const currUser = { name: row[3], project: row[0], correctCohort: "" };
-
+      const currUser = { name: row[2], project: row[0], correctCohort: "" };
       const cohortMemberFound = cohortMembers.find(
         (member: CohortMember) =>
           member.name === currUser.name && member.project === currUser.project
@@ -85,7 +84,7 @@ export const updateClockifyHours = async () => {
         const correctCohort = cohortMembers.find(
           (member: CohortMember) => member.name === currUser.name
         );
-        currUser.correctCohort = correctCohort.project;
+        currUser.correctCohort = correctCohort ? correctCohort.project : "";
         wrongCohort.push(currUser);
       }
 
@@ -93,10 +92,10 @@ export const updateClockifyHours = async () => {
         project: row[0],
         client: row[1],
         weekStart,
-        weekEnd,
-        user: row[3],
-        time: row[4],
-        timeDec: row[5],
+        //weekEnd,
+        user: row[2],
+        time: row[3],
+        //timeDec: row[5],
       };
 
       users.push(user);

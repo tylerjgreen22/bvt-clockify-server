@@ -61,10 +61,11 @@ app.get("/downloadCSV", (req: Request, res: Response) => {
 });
 
 // Updates the database with the uploaded CSVs
-app.get("/updateDatabase", async (req: Request, res: Response) => {
+app.post("/updateDatabase", async (req: Request, res: Response) => {
+  const fileDate = req.body.fileDate;
   try {
     await updateCohortMembers();
-    const wrongCohort = await updateClockifyHours();
+    const wrongCohort = await updateClockifyHours(fileDate);
     res.status(200).json({ Message: "Database updated", wrongCohort });
   } catch (error) {
     console.error(error);
@@ -74,7 +75,7 @@ app.get("/updateDatabase", async (req: Request, res: Response) => {
   }
 });
 
-// Updates all the list of cohort members based on an uploaded csv
+// Updates the list of cohort members based on an uploaded csv
 app.post("/updateCohortMembers", (req: Request, res: Response) => {
   const files = req.files;
 
@@ -96,7 +97,7 @@ app.post("/updateCohortMembers", (req: Request, res: Response) => {
   res.status(201).json({ message: "member csv updated" });
 });
 
-// Updates all clockify entries in the database
+// Updates clockify entries based on an uploaded csv
 app.post("/updateClockifyHours", async (req: Request, res: Response) => {
   const files = req.files;
 
@@ -105,6 +106,12 @@ app.post("/updateClockifyHours", async (req: Request, res: Response) => {
   }
 
   const file = Array.isArray(files.file) ? files.file[0] : files.file;
+
+  const fileNameArr = file.name.split("_");
+  const day = fileNameArr[4];
+  const month = fileNameArr[5];
+  const year = fileNameArr[6].split("-")[0];
+  const fileDate = `${day}/${month}/${year}`;
 
   file.mv(
     path.join(__dirname, "public", "database.csv"),
@@ -118,7 +125,7 @@ app.post("/updateClockifyHours", async (req: Request, res: Response) => {
     }
   );
 
-  res.status(201).json({ message: "Clockify csv updated" });
+  res.status(201).json({ message: "Clockify csv updated", fileDate });
 });
 
 // Generates a CSV based on the selected project options

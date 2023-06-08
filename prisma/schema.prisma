@@ -14,10 +14,10 @@ model ClockifyHours {
   project   String
   client    String?
   weekStart DateTime
-  weekEnd   DateTime
+  weekEnd   DateTime?
   user      String
   time      String
-  timeDec   String
+  timeDec   String?
 
   @@id([user, project, weekStart])
 }
