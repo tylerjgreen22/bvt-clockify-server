@@ -65,8 +65,8 @@ app.post("/updateDatabase", async (req: Request, res: Response) => {
   const fileDate = req.body.fileDate;
   try {
     await updateCohortMembers();
-    const wrongCohort = await updateClockifyHours(fileDate);
-    res.status(200).json({ Message: "Database updated", wrongCohort });
+    const message = await updateClockifyHours(fileDate);
+    res.status(200).json(message);
   } catch (error) {
     console.error(error);
     res

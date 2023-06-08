@@ -59,6 +59,7 @@ export const updateClockifyHours = async (fileDate: string) => {
   const wrongCohort: CohortMember[] = [];
   const readFile = promisify(fs.readFile);
   const parseCSV = promisify(parse);
+  let updateCount;
 
   try {
     const data = await readFile("./public/database.csv", "utf-8");
@@ -101,8 +102,7 @@ export const updateClockifyHours = async (fileDate: string) => {
       users.push(user);
     });
 
-    console.log(users);
-    await prisma.ClockifyHours.createMany({
+    updateCount = await prisma.ClockifyHours.createMany({
       data: users,
       skipDuplicates: true,
     });
@@ -110,7 +110,11 @@ export const updateClockifyHours = async (fileDate: string) => {
     console.error;
   }
 
-  return wrongCohort;
+  if (updateCount.count) {
+    return { message: "Database updated", wrongCohort };
+  } else {
+    return { message: "No update made", wrongCohort };
+  }
 };
 
 // Generates the CSV contents based on the options arguments
