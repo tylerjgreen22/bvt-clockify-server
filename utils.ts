@@ -59,7 +59,7 @@ export const updateClockifyHours = async (fileDate: string) => {
   const wrongCohort: CohortMember[] = [];
   const readFile = promisify(fs.readFile);
   const parseCSV = promisify(parse);
-  let updateCount;
+  let updateCount = 0;
 
   try {
     const data = await readFile("./public/database.csv", "utf-8");
@@ -105,12 +105,12 @@ export const updateClockifyHours = async (fileDate: string) => {
     updateCount = await prisma.ClockifyHours.createMany({
       data: users,
       skipDuplicates: true,
-    });
+    }).count;
   } catch (error) {
     console.error;
   }
 
-  if (updateCount.count) {
+  if (updateCount) {
     return { message: "Database updated", wrongCohort };
   } else {
     return { message: "No update made", wrongCohort };
