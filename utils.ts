@@ -101,6 +101,7 @@ export const updateClockifyHours = async (fileDate: string) => {
       users.push(user);
     });
 
+    console.log(users);
     await prisma.ClockifyHours.createMany({
       data: users,
       skipDuplicates: true,
