@@ -102,10 +102,12 @@ export const updateClockifyHours = async (fileDate: string) => {
       users.push(user);
     });
 
-    updateCount = await prisma.ClockifyHours.createMany({
-      data: users,
-      skipDuplicates: true,
-    }).count;
+    console.log(
+      await prisma.ClockifyHours.createMany({
+        data: users,
+        skipDuplicates: true,
+      })
+    );
   } catch (error) {
     console.error;
   }
