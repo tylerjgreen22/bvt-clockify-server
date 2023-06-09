@@ -8,6 +8,8 @@ Step 1: Create a supabase DB and add the connection string to the .env file gene
 
 Step 2: Run "npx prisma db push". Prisma will automatically update the supabase DB with the required tables based on the schema file.
 
+Step 3: If running the server on local machine, use npx ts-node server.ts. If deploying server, use npm install as build command, and npx ts-node server.ts as start command.
+
 # Steps for generating a CSV:
 
 Step 1: Upload a Member CSV. This file contains all of the memebers of the cohort and should be a CSV of the following format:
