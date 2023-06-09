@@ -11,20 +11,20 @@ datasource db {
 }
 
 model ClockifyHours {
-  project   String
-  client    String?
-  weekStart DateTime
-  weekEnd   DateTime?
-  user      String
-  time      String
-  timeDec   String?
+  Project   String
+  Client    String
+  User      String
+  WeekStart DateTime
+  Time      String
+  WeekEnd   DateTime?
+  TimeDec   String?
 
-  @@id([user, project, weekStart])
+  @@id([User, Project, WeekStart])
 }
 
 model CohortStudents {
-  name    String
-  project String
+  Name    String
+  Project String
 
-  @@id([name, project])
+  @@id([Name, Project])
 }
